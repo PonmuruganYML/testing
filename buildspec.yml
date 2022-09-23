@@ -16,7 +16,6 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Compiling the Node.js code
-      - cd ..
       - cd terraform
       - ./_terraform_mgnt.sh -c deploy -l remote -w 'ponmurugan-terraform-workspace'
       - ./_terraform_mgnt.sh -c syncInlinePolicies -l remote -w 'ponmurugan-terraform-workspace'
