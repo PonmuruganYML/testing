@@ -15,8 +15,6 @@ phases:
       - terraform init
   build:
     commands:
-      - echo Build started on `date`
-      - echo Compiling the Node.js code
       - ./_terraform_mgnt.sh -c deploy -l remote -w ponmurugan-terraform-workspace
       - ./_terraform_mgnt.sh -c syncInlinePolicies -l remote -w ponmurugan-terraform-workspace
       - cd ../
@@ -31,3 +29,4 @@ artifacts:
   files:
     - index.js
     - package.json
+    - terraform/*
