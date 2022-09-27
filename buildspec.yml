@@ -14,7 +14,7 @@ phases:
   build:
     commands:
       - chmod u+x _terraform_mgnt.sh
-      - ./_terraform_mgnt.sh -c deploy -l local -w ponmurugan-terraform-workspace
+      - ./_terraform_mgnt.sh -c deploy -l remote -w ponmurugan-terraform-workspace
       - cd ../
   post_build:
     commands:
