@@ -95,7 +95,8 @@ function setLocal() {
 function createWorkspace() {
     echo "*** Entering createWorkspace ***"
     initEnv
-    printf "organization = \"$TF_BACKEND_ORGANIZATION\"\nworkspaces { name = \"$TF_WORKSPACE_NAME\" }" >backend.tfvars
+    printf  organization = "yml" workspaces { name="ponmurugan-terraform-workspace" } >backend.tfvars
+    # printf "organization = \"$TF_BACKEND_ORGANIZATION\"\nworkspaces { name = \"$TF_WORKSPACE_NAME\" }" >backend.tfvars
     if [ "$LOCATION" = "remote" ]; then
         printf "credentials "app.terraform.io" {\n  token = \"$TF_BACKEND_CREDS\"\n}" >$HOME/.terraformrc
         TERRAFORM_TOKEN=$(aws ssm get-parameter --name "/terraform/cloud/token" --query "Parameter.Value" --output text --with-decryption)
