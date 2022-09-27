@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts c:l:p:r:s:t:w: flag; do
+while getopts c:l:p:r:s:t:w:o: flag; do
     case "$flag" in
     c) COMMAND="$OPTARG" ;;           # deploy or autodelete
     l) LOCATION="$OPTARG" ;;          # local or remote
@@ -8,7 +8,8 @@ while getopts c:l:p:r:s:t:w: flag; do
     r) AWS_REGION="$OPTARG" ;;        # Optional - region
     s) SERVICE_NAME="$OPTARG" ;;      # Optional - service name
     t) TARGET_MODULE="$OPTARG" ;;     # Optional - target module
-    w) TF_WORKSPACE_NAME="-o yml" ;; # Optional - workspace name
+    w) TF_WORKSPACE_NAME="$OPTARG" ;; # Optional - workspace name
+    o) TF_BACKEND_ORGANIZATION="yml" ;; # Optional - organisation name
     esac
 done
 
