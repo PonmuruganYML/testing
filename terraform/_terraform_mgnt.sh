@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts c:l:p:r:s:t:w:o: flag; do
+while getopts c:l:p:r:s:t:w:o:b: flag; do
     case "$flag" in
     c) COMMAND="$OPTARG" ;;           # deploy or autodelete
     l) LOCATION="$OPTARG" ;;          # local or remote
