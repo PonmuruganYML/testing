@@ -1,6 +1,6 @@
 #!/bin/bash
-​
-while getopts c:l:p:r:s:t:w:o: flag; do
+
+while getopts c:l:p:r:s:t:w: flag; do
     case "$flag" in
     c) COMMAND="$OPTARG" ;;           # deploy or autodelete
     l) LOCATION="$OPTARG" ;;          # local or remote
@@ -8,37 +8,33 @@ while getopts c:l:p:r:s:t:w:o: flag; do
     r) AWS_REGION="$OPTARG" ;;        # Optional - region
     s) SERVICE_NAME="$OPTARG" ;;      # Optional - service name
     t) TARGET_MODULE="$OPTARG" ;;     # Optional - target module
-    w) TF_WORKSPACE_NAME="$OPTARG" ;; # Optional - workspace name
-    o) TF_BACKEND_ORGANIZATION="-o yml" ;; # Optional - organisation name
+    w) TF_WORKSPACE_NAME="-o yml" ;; # Optional - workspace name
     esac
 done
-​
+
 TERRAFORM_TOKEN=""
-​
+
 echo command: $COMMAND
 echo workspace: $TF_WORKSPACE_NAME
 echo location: $LOCATION
 echo target_module: $TARGET_MODULE
 echo service: $SERVICE_NAME
-echo organisation: $TF_BACKEND_ORGANIZATION
-​
+
 if [ "$LOCATION" = "local" ]; then
     if [ -z "$TF_WORKSPACE_NAME" ]; then
         TF_WORKSPACE_NAME=$AWS_PROFILE-$SERVICE_NAME
     fi
 fi
-​
+
 if [ -n "$TF_VAR_service_name" ]; then
     SERVICE_NAME="$TF_VAR_service_name"
 fi
-​
-if [ -z "$COMMAND" ] || [ -z "$SERVICE_NAME" ] || [ -z "$LOCATION" ] || [ -z "$TF_WORKSPACE_NAME" ] || [ -z "$TF_BACKEND_ORGANIZATION" ]; then
-    echo "Invalid arguments passed: command: $COMMAND service: $SERVICE_NAME location: $LOCATION workspace: $TF_WORKSPACE_NAME org: $TF_BACKEND_ORGANIZATION"
-    echo "-c [init/plan/deploy/autodelete/sync/syncInlinePolicies] -l [local/remote] - p <profile> -r <region> -s <service name> -w <workspace> -o <yml/yml-usa>"
-    echo "Argument workspace is needed for multiservice"
+
+if [ -z "$COMMAND" ] || [ -z "$SERVICE_NAME" ] || [ -z "$LOCATION" ] || [ -z "$TF_WORKSPACE_NAME" ]; then
+    echo "Invalid arguments passed: command: $COMMAND service: $SERVICE_NAME location: $LOCATION workspace: $TF_WORKSPACE_NAME"
     exit -1
 fi
-​
+
 if [ "$LOCATION" = "local" ]; then
     if [ -z "$AWS_REGION" ] || [ -z "$AWS_PROFILE" ]; then
         echo "Invalid arguments passed: region: $AWS_REGION profile: $AWS_PROFILE"
@@ -47,7 +43,7 @@ if [ "$LOCATION" = "local" ]; then
     echo aws_region: $AWS_REGION
     echo aws_profile: $AWS_PROFILE
 fi
-​
+
 function initEnv() {
     if [ "$LOCATION" = "local" ]; then
         export AWS_REGION=$AWS_REGION
@@ -55,7 +51,7 @@ function initEnv() {
         export AWS_SDK_LOAD_CONFIG=1
     fi
 }
-​
+
 function HelpInfo() {
     # Display Help
     echo "HELP INFORMATION"
@@ -74,15 +70,16 @@ function HelpInfo() {
     echo
     echo
 }
-​
+
 function setLocal() {
     if [ "$LOCATION" = "local" ]; then
         echo "*** Entering setLocal ***"
         TF_VAR_service_version="local"
+        TF_BACKEND_ORGANIZATION=yml
         GIT_COMMIT=$(git rev-parse HEAD)
         GIT_TAG=$(git tag --points-at $USE_GIT_COMMIT)
         BUILD_TIMESTAMP=$(date '+%s')
-​
+
         initEnv
         export TF_VAR_env=$(aws ssm get-parameter --name "/yc-operator-platform-service-v1/env" --query "Parameter.Value" --region $AWS_REGION --output text)
         export TF_VAR_operator=$(aws ssm get-parameter --name "/yc-operator-platform-service-v1/operator" --query "Parameter.Value" --region $AWS_REGION --output text)
@@ -94,10 +91,11 @@ function setLocal() {
         export TF_VAR_artifact_bucket_region=$AWS_REGION
     fi
 }
-​
+
 function createWorkspace() {
     echo "*** Entering createWorkspace ***"
     initEnv
+    
     printf "organization = \"$TF_BACKEND_ORGANIZATION\"\nworkspaces { name = \"$TF_WORKSPACE_NAME\" }" >backend.tfvars
     if [ "$LOCATION" = "remote" ]; then
         printf "credentials "app.terraform.io" {\n  token = \"$TF_BACKEND_CREDS\"\n}" >$HOME/.terraformrc
@@ -106,7 +104,7 @@ function createWorkspace() {
         TERRAFORM_TOKEN=$(cat $HOME/.terraformrc-token)
     fi
 }
-​
+
 function createVariables() {
     echo "*** Entering createVariables ***"
     if [ "$LOCATION" = "local" ]; then
@@ -124,7 +122,7 @@ function createVariables() {
 }" >service.tfvars.json
     fi
 }
-​
+
 function initiate() {
     echo "*** Entering initiate ***"
     initEnv
@@ -134,15 +132,8 @@ function initiate() {
     else
         terraform init -no-color --backend-config="backend.tfvars" -var-file service.tfvars.json
     fi
-​
-    if [ $? -eq 0 ]; then 
-        echo "*** initiate executed successfully ***" 
-    else 
-        echo "*** initiate terminated unsuccessfully ***"
-        exit 1
-    fi
 }
-​
+
 function terraformLocal() {
     echo "*** Entering terraformLocal ***"
     initEnv
@@ -152,7 +143,7 @@ function terraformLocal() {
         echo "RESPONSE: " $RESPONSE
     fi
 }
-​
+
 function terraformDeleteWorkspace() {
     echo "*** Entering terraformDeleteWorkspace ***"
     initEnv
@@ -162,53 +153,38 @@ function terraformDeleteWorkspace() {
         echo "RESPONSE: " $RESPONSE
     fi
 }
-​
+
 function plan() {
     echo "*** Entering plan ***"
     initEnv
     terraform validate
-​
+
     if [ "$LOCATION" = "remote" ]; then
         terraform plan -no-color -out=terraform.plan
     else
         terraform plan -var-file service.tfvars.json -out=terraform.plan
     fi
-​
-    if [ $? -eq 0 ]; then 
-        echo "*** plan executed successfully ***" 
-    else 
-        echo "*** plan terminated unsuccessfully ***"
-        exit 1
-    fi
 }
-​
+
 function deploy() {
     echo "*** Entering deploy ***"
     initEnv
     terraform apply -input=false -auto-approve -no-color terraform.plan
-​
-    if [ $? -eq 0 ]; then 
-        echo "*** deploy executed successfully ***" 
-    else 
-        echo "*** deploy terminated unsuccessfully ***"
-        exit 1
-    fi
-​
     terraform output -json >output.json
 }
-​
+
 function destroyAll() {
     read -r -p "Are you sure? [y/N] " response
     if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         echo "*** previewing all destroyed resources ***"
         initEnv
-​
+
         if [ "$LOCATION" = "remote" ]; then
             terraform plan -destroy
         else
             terraform plan -destroy -var-file service.tfvars.json
         fi
-​
+
         read -r -p "Are you finally sure to delete all resources? [y/N] " response2
         if [[ "$response2" =~ ^([yY][eE][sS]|[yY])$ ]]; then
             echo "*** Destroying ALL Resources ***"
@@ -225,40 +201,26 @@ function destroyAll() {
         echo "*** that was dumb then...***"
     fi
 }
-​
+
 function destroyAllAuto() {
     echo "*** Entering destroyAllAuto ***"
     initEnv
     if [ "$LOCATION" = "remote" ]; then
         terraform plan -destroy -no-color -out=destroy.plan
-        if [ $? -eq 0 ]; then 
-            echo "*** destroyAllAuto:plan executed successfully ***" 
-        else 
-            echo "*** destroyAllAuto:plan terminated unsuccessfully ***"
-            exit 1
-        fi
-​
         terraform apply -input=false -auto-approve -no-color destroy.plan
-        if [ $? -eq 0 ]; then 
-            echo "*** destroyAllAuto:apply executed successfully ***" 
-        else 
-            echo "*** destroyAllAuto:apply terminated unsuccessfully ***"
-            exit 1
-        fi
-​
         terraform output -json >output.json
         echo '*** Destroy completed ***'
     else
         terraform destroy -var-file service.tfvars.json
     fi
 }
-​
+
 function destroyModule() {
     read -r -p "Are you sure? [y/N] to delete $TARGET_MODULE module? " response
     if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         echo "*** destroying $TARGET_MODULE module ***"
         initEnv
-​
+
         if [ "$LOCATION" = "remote" ]; then
             terraform destroy -target module.$TARGET_MODULE
         else
@@ -268,50 +230,44 @@ function destroyModule() {
         echo "that was dumb then. "
     fi
 }
-​
+
 function syncResources() {
     echo "*** Entering syncResources ***"
     initEnv
-​
+
     if [ "$LOCATION" = "remote" ]; then
         terraform refresh -no-color
     else
         terraform refresh -var-file service.tfvars.json
     fi
 }
-​
+
 function syncInlinePolicies() {
     echo "Syncing inline policies for all users. Invoking lambda function yc-usermgmt-service-v1-${TF_VAR_env}-sync"
     initEnv
-​
+
     if [ "$LOCATION" = "remote" ]; then
       aws --version
       aws lambda invoke --cli-read-timeout 300 --function-name "yc-usermgmt-service-v1-${TF_VAR_env}-sync"  --payload '{ "source": "code-build" }' response.json
-      if [ $? -eq 0 ]; then 
-            echo "*** lambda:invoke executed successfully ***" 
-        else 
-            echo "*** lambda:invoke terminated unsuccessfully ***"
-            exit 1
-      fi
     else
         echo "Not implemented for local"
     fi
-​
+
     echo "Finished syncing linine polcies for all users"
 }
-​
+
 if [ "$LOCATION" = "local" ]; then
     echo '*** WARNING *** Setting running local configurations'
     setLocal
 fi
-​
+
 case $COMMAND in
 init)
     echo 'initiating...'
     createWorkspace
     initiate
     echo 'TODO: terraformLocal'
-​
+
     echo '* initiated * '
     exit
     ;;
@@ -382,9 +338,10 @@ help)
     exit
     ;;
 *)
-    echo $"*** Usage: $0 {init|plan|deploy|delete|sync|delmodule|syncInlinePolicies} <platform> <service_name> {local|remote} <organisation> ***"
+    echo $"*** Usage: $0 {init|plan|deploy|delete|sync|delmodule|syncInlinePolicies} <platform> <service_name> {local|remote} ***"
+    echo $"*** Usage: $0 eg. initiate dharmadev helloworld local ***"
     exit 1
     ;;
 esac
-​
+
 exit
