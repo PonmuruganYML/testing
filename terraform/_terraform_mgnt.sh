@@ -10,6 +10,7 @@ while getopts c:l:p:r:s:t:w:o: flag; do
     t) TARGET_MODULE="$OPTARG" ;;     # Optional - target module
     w) TF_WORKSPACE_NAME="$OPTARG" ;; # Optional - workspace name
     o) TF_BACKEND_ORGANIZATION="$OPTARG" ;; # Optional - organisation name
+    b) TF_BACKEND_CREDS="$OPTARG" # Optional - token name
     esac
 done
 
