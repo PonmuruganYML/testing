@@ -9,7 +9,7 @@ while getopts c:l:p:r:s:t:w:o: flag; do
     s) SERVICE_NAME="$OPTARG" ;;      # Optional - service name
     t) TARGET_MODULE="$OPTARG" ;;     # Optional - target module
     w) TF_WORKSPACE_NAME="$OPTARG" ;; # Optional - workspace name
-    o) TF_BACKEND_ORGANIZATION="yml" ;; # Optional - organisation name
+    o) TF_BACKEND_ORGANIZATION="$OPTARG" ;; # Optional - organisation name
     esac
 done
 
