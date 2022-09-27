@@ -5,14 +5,14 @@ terraform {
       version = "4.11.0"
     }
   }
-  # backend "remote" {
-  #   organization = "yml"
-  #   workspaces {
-  #     name = "ponmurugan-terraform-workspace"
-  #   }
-  # }
+  backend "remote" {
+    organization = "yml"
+    workspaces {
+      name = "ponmurugan-terraform-workspace"
+    }
+  }
 
-  backend "remote" {}
+
 }
 
 # Configure the AWS Provider
