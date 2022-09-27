@@ -338,7 +338,7 @@ help)
     ;;
 *)
     echo $"*** Usage: $0 {init|plan|deploy|delete|sync|delmodule|syncInlinePolicies} <platform> <service_name> {local|remote} ***"
-    echo $"*** Usage: $0 eg. initiate rajdev-1 yc-operator-dashboard-v1 local ***"
+    echo $"*** Usage: $0 eg. initiate dharmadev helloworld local ***"
     exit 1
     ;;
 esac
