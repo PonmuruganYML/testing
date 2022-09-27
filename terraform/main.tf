@@ -5,14 +5,12 @@ terraform {
       version = "4.11.0"
     }
   }
-  # backend "remote" {
-  #   organization = "yml"
-  #   workspaces {
-  #     name = "ponmurugan-terraform-workspace"
-  #   }
-  # }
-  backend "remote" {}
-
+  backend "remote" {
+    organization = "yml"
+    workspaces {
+      name = "ponmurugan-terraform-workspace"
+    }
+  }
 
 }
 
